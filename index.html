@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kralenspel">
+<title>Kralenspel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+:root {
+  --creme:           #FAF4E6;
+  --warm-white:      #FFFFFF;
+  --ink:             #1F3A4D;
+  --muted:           #A8B5C0;
+  --brown-mid:       #5A7184;
+
+  --terracotta:      #EE5B4C;
+  --terracotta-soft: #FCE3E0;
+  --sage:            #5BBE7C;
+  --sage-soft:       #E2F5E9;
+  --mustard:         #E0A920;
+  --mustard-light:   #FFE19A;
+  --mustard-soft:    #FFF6DC;
+  --sky:             #2B8AE0;
+  --sky-soft:        #DCEBF9;
+
+  --shadow:          rgba(31,58,77,0.12);
+  --shadow-flat:     0 3px 0 rgba(31, 58, 77, 0.16);
+  --shadow-press:    0 5px 0 rgba(31, 58, 77, 0.22);
+
+  /* kralenstaafjes-kleuren 1 t/m 9 (montessori-standaard) */
+  --k1: #E15048; /* rood */
+  --k2: #6FCB6F; /* groen */
+  --k3: #F4A1C2; /* roze */
+  --k4: #FFCB3D; /* geel */
+  --k5: #7EC8E3; /* lichtblauw */
+  --k6: #9B7BC2; /* paars */
+  --k7: #FFFFFF; /* wit */
+  --k8: #A9744F; /* bruin */
+  --k9: #2B5D8B; /* donkerblauw */
+  --k10: #E0A920; /* goud, tienstaaf */
+}
+
+body {
+  font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+  color: var(--ink);
+  background-color: var(--creme);
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 55% 45% at 12% 8%, rgba(255, 203, 61, 0.28), transparent 65%),
+    radial-gradient(ellipse 50% 40% at 92% 90%, rgba(238, 91, 76, 0.22), transparent 60%),
+    radial-gradient(ellipse 45% 40% at 96% 14%, rgba(43, 138, 224, 0.18), transparent 70%),
+    radial-gradient(ellipse 35% 30% at 6% 88%, rgba(31, 175, 184, 0.20), transparent 65%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+.app { max-width: 600px; margin: 0 auto; padding: 18px 16px 40px; position: relative; z-index: 1; }
+
+.header { text-align: center; margin-bottom: 16px; }
+.header h1 { font-size: 34px; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; }
+.header h1 span { color: var(--terracotta); }
+
+.card {
+  background: var(--warm-white);
+  border-radius: 26px 22px 28px 24px / 24px 28px 22px 26px;
+  padding: 20px;
+  box-shadow: var(--shadow-flat), 0 10px 24px -14px rgba(31,58,77,0.3);
+  margin-bottom: 14px;
+}
+
+.som-display { text-align: center; margin-bottom: 6px; }
+.som-tekst { font-size: 40px; font-weight: 700; color: var(--ink); letter-spacing: -1px; line-height: 1; }
+.som-tekst .vraagteken { color: var(--terracotta); }
+
+.bord-teller {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--brown-mid);
+  margin-bottom: 14px;
+}
+.bord-teller b { color: var(--sky); font-size: 17px; }
+
+.melding {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+  border-radius: 18px;
+  padding: 10px 14px 12px;
+  margin-bottom: 12px;
+  display: none;
+}
+.melding.fout { background: var(--terracotta-soft); color: #A32D2D; }
+.melding.info { background: var(--mustard-soft); color: #8A6208; }
+.melding-pijl { font-size: 34px; line-height: 1; }
+.melding-woord { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* ===== BORD (werkvlak) ===== */
+.werkvlak {
+  background: linear-gradient(180deg, #EFE3C8, #E9DAB8);
+  border-radius: 18px;
+  padding: 16px 14px;
+  box-shadow: inset 0 0 0 2px rgba(31,58,77,0.08), inset 0 3px 10px rgba(31,58,77,0.08);
+  margin-bottom: 14px;
+}
+.bord-sectie { margin-bottom: 6px; }
+.bord-sectie:last-child { margin-bottom: 0; }
+.bord-label { font-size: 12px; font-weight: 700; color: #8A7549; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.bord-rij {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 6px 4px;
+  height: 340px;
+}
+.bord-rij.leeg-hint { align-items: center; justify-content: center; }
+.leeg-tekst { color: #A8956B; font-size: 15px; font-weight: 500; }
+.scheiding { height: 2px; background: rgba(31,58,77,0.1); border-radius: 2px; margin: 10px 0; }
+
+.staaf-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 36px;
+  flex: 0 0 auto;
+  height: 100%;
+}
+.kralen-kolom {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+}
+.staaf {
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 3px;
+}
+.staaf::before {
+  content: "";
+  position: absolute;
+  top: -6px; bottom: -6px; left: 50%;
+  width: 3px;
+  background: rgba(31,58,77,0.18);
+  transform: translateX(-50%);
+  z-index: 0;
+}
+.kraal {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2.5px rgba(31,58,77,0.22), 0 1px 2px rgba(31,58,77,0.15);
+  position: relative;
+  z-index: 1;
+  cursor: default;
+  transition: transform .1s ease;
+}
+.kraal.klikbaar { cursor: pointer; }
+.kraal.klikbaar:hover { transform: scale(1.15); }
+.kraal.wit { box-shadow: inset 0 0 0 2.5px rgba(31,58,77,0.35), 0 1px 2px rgba(31,58,77,0.15); }
+.kraal.weggehaald { box-shadow: inset 0 0 0 2.5px rgba(31,58,77,0.12); }
+.kraal.weggehaald:hover { transform: scale(1.15); }
+
+.staaf-actie-slot {
+  flex: 0 0 40px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.staaf-actie-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1.5px dashed var(--terracotta);
+  background: var(--terracotta-soft);
+  color: var(--terracotta);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform .1s ease, background .15s ease, color .15s ease;
+}
+.staaf-actie-btn:active { transform: translateY(1px); }
+.staaf-actie-btn.actief {
+  background: var(--sage-soft);
+  border-color: var(--sage);
+  color: var(--sage);
+}
+.staaf-actie-btn.hint-knipper {
+  background: var(--terracotta);
+  border-style: solid;
+  color: #fff;
+  animation: knipper 0.9s ease-in-out infinite;
+}
+@keyframes knipper {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.staaf-actie-btn.aftrek-knop {
+  border: 1.5px dashed var(--sky);
+  background: var(--sky-soft);
+  color: var(--sky);
+}
+
+.losse-cluster {
+  display: flex; flex-wrap: wrap; gap: 7px;
+  max-width: 220px;
+  align-content: flex-start;
+  padding-top: 6px;
+}
+
+/* ===== VOORRAAD (palet) ===== */
+.voorraad { margin-top: 4px; }
+.voorraad-label { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px; }
+.voorraad-rij { display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: flex-start; gap: 4px; }
+.palet-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 8px 6px 9px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(31,58,77,0.08);
+  background: #fff;
+  box-shadow: 0 3px 6px rgba(31,58,77,0.14);
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: transform .1s ease, box-shadow .1s ease;
+}
+.palet-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 10px rgba(31,58,77,0.18); }
+.palet-btn:active { transform: translateY(1px); box-shadow: 0 2px 4px rgba(31,58,77,0.12); }
+.palet-btn .mini-kraal { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(31,58,77,0.22); }
+.palet-btn .mini-kraal.wit { box-shadow: inset 0 0 0 1.5px rgba(31,58,77,0.35); }
+.palet-btn .mini-staaf { display: flex; gap: 3px; }
+.palet-btn .mini-staaf.kolom { flex-direction: column; }
+.palet-label { font-size: 12px; font-weight: 600; color: var(--brown-mid); }
+.palet-btn.tienstaaf-btn { background: var(--mustard-soft); }
+.palet-btn.eenheid-btn.geselecteerd { box-shadow: 0 0 0 3px var(--sky-soft), 0 3px 6px rgba(31,58,77,0.14); }
+.palet-btn.uitgeschakeld { opacity: 0.35; cursor: not-allowed; }
+.palet-btn.uitgeschakeld:hover { transform: none; box-shadow: 0 3px 6px rgba(31,58,77,0.14); }
+
+/* ===== ANTWOORD-INVOER ===== */
+.antwoord-wrap { margin-top: 4px; }
+.antwoord-display {
+  background: var(--sky-soft);
+  border-radius: 16px;
+  padding: 14px;
+  text-align: center;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--ink);
+  height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  border: 3px solid transparent;
+  box-sizing: border-box;
+  transition: border-color .2s;
+}
+.antwoord-display.leeg { color: var(--muted); }
+.antwoord-display.fout { border-color: var(--terracotta); animation: schud .35s ease; }
+.antwoord-display.goed { border-color: var(--sage); }
+@keyframes schud {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-5px)}
+  80%{transform:translateX(5px)}
+}
+.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.num-btn {
+  padding: 15px 10px;
+  border-radius: 16px;
+  border: none;
+  background: #F0EAD8;
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--ink);
+  transition: transform .1s ease, box-shadow .1s ease;
+  box-shadow: var(--shadow-flat);
+}
+.num-btn:hover { transform: translateY(-1px); }
+.num-btn:active { transform: translateY(2px); box-shadow: none; }
+.num-btn.del { background: var(--terracotta-soft); color: var(--terracotta); }
+.num-btn.ok { background: var(--sage); color: #fff; }
+
+/* ===== KNOPPEN ===== */
+.btn-rij { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+.icon-btn {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.icon-btn.primair { background: var(--sage); color: #fff; box-shadow: var(--shadow-press); }
+.icon-btn.pijl { background: var(--sky); color: #fff; box-shadow: var(--shadow-press); font-weight: 700; font-family: inherit; }
+.icon-btn.pijl span { display: block; transform: translateX(1px); }
+.icon-btn.secundair { background: var(--sky-soft); color: var(--sky); box-shadow: var(--shadow-flat); }
+.icon-btn:hover { transform: translateY(-2px); }
+.icon-btn:active { transform: translateY(2px); box-shadow: none; }
+.icon-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+.goed-banner {
+  background: var(--sage);
+  border-radius: 24px 28px 22px 26px / 26px 22px 28px 24px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--shadow-press);
+  display: none;
+}
+.goed-tekst { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+.volgende-btn {
+  padding: 12px 28px; border-radius: 999px; border: none;
+  background: #fff; font-family: inherit; font-size: 16px; font-weight: 600;
+  cursor: pointer; color: var(--sage); box-shadow: var(--shadow-flat);
+}
+
+#confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<div class="app">
+  <div class="header"><h1>Kralen<span>spel</span></h1></div>
+
+  <div class="card">
+    <div class="som-display">
+      <div class="som-tekst" id="som-tekst">— − — = <span class="vraagteken">?</span></div>
+    </div>
+    <div class="melding fout" id="melding"></div>
+
+    <div class="werkvlak">
+      <div class="bord-rij" id="bord-rij"></div>
+    </div>
+
+    <div class="voorraad" id="voorraad-wrap">
+      <div class="voorraad-label">Erbij leggen</div>
+      <div class="voorraad-rij" id="voorraad-eenheden"></div>
+    </div>
+
+    <div class="antwoord-wrap" id="antwoord-wrap" style="display:none">
+      <div class="antwoord-display" id="antwoord-display">?</div>
+      <div class="numpad" id="numpad"></div>
+    </div>
+
+    <div class="btn-rij">
+      <button class="icon-btn pijl" id="klaar-btn" title="Volgende stap"><span>→</span></button>
+      <button class="icon-btn secundair" id="undo-btn" title="Ongedaan maken">↺</button>
+    </div>
+  </div>
+
+  <div class="goed-banner" id="goed-banner">
+    <div class="goed-tekst">🎉 Goed gedaan!</div>
+    <button class="volgende-btn" id="volgende-btn">Volgende som →</button>
+  </div>
+</div>
+
+<script>
+// ========== KLEUREN ==========
+const KLEUR = {1:'var(--k1)',2:'var(--k2)',3:'var(--k3)',4:'var(--k4)',5:'var(--k5)',6:'var(--k6)',7:'var(--k7)',8:'var(--k8)',9:'var(--k9)',10:'var(--k10)'};
+const KLEUR_HEX = {1:'#E15048',2:'#6FCB6F',3:'#F4A1C2',4:'#FFCB3D',5:'#7EC8E3',6:'#9B7BC2',7:'#FFFFFF',8:'#A9744F',9:'#2B5D8B',10:'#E0A920'};
+function verbleek(hex, factor) {
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  const mix = (c) => Math.round(c + (243 - c) * factor); // 243 = creme achtergrondtoon
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
+
+// ========== CONFETTI ==========
+let confParticles = [], confRaf = null;
+function startConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  confParticles = [];
+  const colors = ['#2B8AE0','#EE5B4C','#FFCB3D','#5BBE7C','#9B7BC2','#E0A920'];
+  for (let i = 0; i < 140; i++) {
+    confParticles.push({
+      x: Math.random() * canvas.width, y: -20 - Math.random() * canvas.height * 0.5,
+      w: 8 + Math.random() * 8, h: 5 + Math.random() * 5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360, rotV: (Math.random() - 0.5) * 10,
+      vy: 3 + Math.random() * 5, vx: (Math.random() - 0.5) * 3, alpha: 1
+    });
+  }
+  if (confRaf) cancelAnimationFrame(confRaf);
+  animateConfetti();
+  setTimeout(() => { confParticles = []; }, 3000);
+}
+function animateConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  confParticles.forEach(p => {
+    p.y += p.vy; p.x += p.vx; p.rot += p.rotV;
+    if (p.y > canvas.height * 0.65) p.alpha = Math.max(0, p.alpha - 0.03);
+    ctx.save(); ctx.globalAlpha = p.alpha;
+    ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+    ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    ctx.restore();
+  });
+  confParticles = confParticles.filter(p => p.alpha > 0);
+  if (confParticles.length > 0) confRaf = requestAnimationFrame(animateConfetti);
+  else ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ========== STATE ==========
+let getal1 = 0, getal2 = 0;
+let fase = 'neerleggen'; // neerleggen | aftrekken | klaar
+let bordStaven = []; // [{ kleur, totaal, weggehaald: [bool,...] }]
+let geschiedenis = [];
+
+function staafWaarde(staaf) { return staaf.totaal - staaf.weggehaald.filter(Boolean).length; }
+
+function snapshot() {
+  return { bordStaven: bordStaven.map(s => ({ ...s, weggehaald: [...s.weggehaald] })) };
+}
+function saveHistory() {
+  geschiedenis.push(snapshot());
+  if (geschiedenis.length > 50) geschiedenis.shift();
+}
+function undo() {
+  if (geschiedenis.length === 0) return;
+  const prev = geschiedenis.pop();
+  bordStaven = prev.bordStaven;
+  document.getElementById('melding').style.display = 'none';
+  render();
+}
+
+function nieuweSom() {
+  getal1 = 20 + Math.floor(Math.random() * 80); // 20-99
+  do {
+    getal2 = 1 + Math.floor(Math.random() * (getal1 - 1));
+  } while (getal1 - getal2 < 1);
+  fase = 'neerleggen';
+  bordStaven = [];
+  geschiedenis = [];
+  typedAnswer = '';
+  klaarOmTeAntwoorden = false;
+  toonVerwijderHint = false;
+  bouwNumpad();
+  updateAntwoordDisplay();
+  document.getElementById('goed-banner').style.display = 'none';
+  document.getElementById('melding').style.display = 'none';
+  document.getElementById('som-tekst').innerHTML = `${getal1} − ${getal2} = <span class="vraagteken">?</span>`;
+  render();
+}
+
+function bordWaarde() { return bordStaven.reduce((s, staaf) => s + staafWaarde(staaf), 0); }
+
+// ========== RENDER: kraal helper ==========
+function maakKraalEl(kleur, isWit, klikbaar, onKlik) {
+  const el = document.createElement('div');
+  el.className = 'kraal' + (isWit ? ' wit' : '') + (klikbaar ? ' klikbaar' : '');
+  el.style.background = kleur;
+  if (klikbaar) el.onclick = onKlik;
+  return el;
+}
+
+// ========== RENDER: werkvlak ==========
+function renderWerkvlak() {
+  const container = document.getElementById('bord-rij');
+  container.innerHTML = '';
+  if (bordStaven.length === 0) {
+    container.classList.add('leeg-hint');
+    container.innerHTML = '<span class="leeg-tekst">Nog niets neergelegd</span>';
+    return;
+  }
+  container.classList.remove('leeg-hint');
+
+  const benodigdTienen = Math.floor(getal1 / 10);
+  const benodigdEenheden = getal1 % 10;
+  const huidigTienenAantal = bordStaven.filter(s => s.totaal === 10).length;
+
+  const weergaveVolgorde = [...bordStaven].sort((a, b) => (a.totaal === 10 ? 0 : 1) - (b.totaal === 10 ? 0 : 1));
+
+  weergaveVolgorde.forEach((staaf) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'staaf-wrap';
+
+    const kolom = document.createElement('div');
+    kolom.className = 'kralen-kolom';
+    const staafEl = document.createElement('div');
+    staafEl.className = 'staaf';
+
+    for (let i = 0; i < staaf.totaal; i++) {
+      const vervaagd = staaf.weggehaald[i];
+      const klikbaar = fase === 'aftrekken';
+      const isWit = staaf.kleurIdx === 7;
+      const kleur = vervaagd ? verbleek(KLEUR_HEX[staaf.kleurIdx], 0.9) : KLEUR[staaf.kleurIdx];
+      const kraal = maakKraalEl(kleur, isWit, klikbaar, () => {
+        saveHistory();
+        staaf.weggehaald[i] = !staaf.weggehaald[i];
+        render();
+      });
+      if (vervaagd) kraal.classList.add('weggehaald');
+      staafEl.appendChild(kraal);
+    }
+
+    if (fase === 'neerleggen') {
+      staafEl.style.cursor = 'pointer';
+      staafEl.title = 'Tik om deze staaf terug te leggen';
+      staafEl.onclick = () => {
+        saveHistory();
+        bordStaven.splice(bordStaven.indexOf(staaf), 1);
+        render();
+      };
+    }
+    kolom.appendChild(staafEl);
+    wrap.appendChild(kolom);
+
+    const slot = document.createElement('div');
+    slot.className = 'staaf-actie-slot';
+    if (staaf.totaal === 10 && fase === 'aftrekken') {
+      const alleWeg = staaf.weggehaald.every(Boolean);
+      const btnWeg = document.createElement('button');
+      btnWeg.className = 'staaf-actie-btn' + (alleWeg ? ' actief' : ' aftrek-knop');
+      btnWeg.innerHTML = alleWeg ? '↺' : '−';
+      btnWeg.title = alleWeg ? 'Deze tienstaaf terugzetten' : 'Deze hele tienstaaf in één keer weghalen';
+      btnWeg.onclick = () => {
+        saveHistory();
+        staaf.weggehaald = staaf.weggehaald.map(() => !alleWeg);
+        render();
+      };
+      slot.appendChild(btnWeg);
+    } else if (fase === 'neerleggen' && toonVerwijderHint) {
+      const isFoutieveTien = staaf.totaal === 10 && huidigTienenAantal > benodigdTienen;
+      const isFoutieveEenheden = staaf.totaal < 10 && staaf.totaal !== benodigdEenheden;
+      if (isFoutieveTien || isFoutieveEenheden) {
+        const btnWeg = document.createElement('button');
+        btnWeg.className = 'staaf-actie-btn hint-knipper';
+        btnWeg.innerHTML = '✕';
+        btnWeg.title = 'Deze staaf weghalen';
+        btnWeg.onclick = () => {
+          saveHistory();
+          bordStaven.splice(bordStaven.indexOf(staaf), 1);
+          render();
+        };
+        slot.appendChild(btnWeg);
+      }
+    }
+    wrap.appendChild(slot);
+
+    container.appendChild(wrap);
+  });
+}
+
+// ========== RENDER: voorraad (palet) ==========
+function renderVoorraad() {
+  const wrap = document.getElementById('voorraad-wrap');
+  if (fase !== 'neerleggen') { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+
+  const eenhedenRow = document.getElementById('voorraad-eenheden');
+  eenhedenRow.innerHTML = '';
+  const huidigeStaaf = bordStaven.find(s => s.totaal < 10);
+  const huidigeVastCount = huidigeStaaf ? huidigeStaaf.totaal : 0;
+  const aantalTienstaven = bordStaven.filter(s => s.totaal === 10).length;
+
+  for (const n of [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]) {
+    const isTien = n === 10;
+    const btn = document.createElement('button');
+    const aanCap = isTien && aantalTienstaven >= 9;
+    btn.className = 'palet-btn' + (isTien ? ' tienstaaf-btn' : ' eenheid-btn') +
+      (!isTien && huidigeVastCount === n ? ' geselecteerd' : '') +
+      (aanCap ? ' uitgeschakeld' : '');
+    btn.disabled = aanCap;
+    const l = document.createElement('div');
+    l.className = 'palet-label';
+    l.textContent = n;
+    btn.appendChild(l);
+    const mini = document.createElement('div');
+    mini.className = 'mini-staaf kolom';
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement('div');
+      d.className = 'mini-kraal' + (n === 7 ? ' wit' : '');
+      d.style.background = KLEUR[n];
+      mini.appendChild(d);
+    }
+    btn.appendChild(mini);
+    btn.onclick = () => {
+      if (isTien) {
+        if (bordStaven.filter(s => s.totaal === 10).length >= 9) return;
+        saveHistory();
+        bordStaven.push({ kleurIdx: 10, totaal: 10, weggehaald: Array(10).fill(false) });
+      } else {
+        saveHistory();
+        bordStaven = bordStaven.filter(s => s.totaal === 10);
+        bordStaven.push({ kleurIdx: n, totaal: n, weggehaald: Array(n).fill(false) });
+      }
+      render();
+    };
+    eenhedenRow.appendChild(btn);
+  }
+}
+
+// ========== CONTROLEREN (neerleggen) ==========
+function controleer() {
+  if (fase !== 'neerleggen') return;
+  const meldingEl = document.getElementById('melding');
+  if (bordWaarde() === getal1) {
+    fase = 'aftrekken';
+    toonVerwijderHint = false;
+    meldingEl.style.display = 'none';
+    render();
+  } else {
+    const verschil = getal1 - bordWaarde();
+    toonVerwijderHint = true;
+    meldingEl.innerHTML = verschil > 0
+      ? `<span class="melding-pijl">⬆</span><span class="melding-woord">meer</span>`
+      : `<span class="melding-pijl">⬇</span><span class="melding-woord">te veel</span>`;
+    meldingEl.style.display = 'flex';
+    render();
+  }
+}
+
+// ========== ANTWOORD-INVOER (aftrekken) ==========
+let typedAnswer = '';
+let klaarOmTeAntwoorden = false;
+let toonVerwijderHint = false;
+
+function bouwNumpad() {
+  const pad = document.getElementById('numpad');
+  pad.innerHTML = '';
+  const layout = ['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
+  layout.forEach(k => {
+    const btn = document.createElement('button');
+    if (k === '⌫') { btn.className = 'num-btn del'; btn.innerHTML = '⌫'; btn.onclick = () => numpadTik('del'); }
+    else if (k === '✓') { btn.className = 'num-btn ok'; btn.innerHTML = '✓'; btn.onclick = () => numpadTik('ok'); }
+    else { btn.className = 'num-btn'; btn.textContent = k; btn.onclick = () => numpadTik(k); }
+    pad.appendChild(btn);
+  });
+}
+
+function updateAntwoordDisplay() {
+  const el = document.getElementById('antwoord-display');
+  el.classList.remove('fout', 'goed');
+  if (typedAnswer === '') {
+    el.classList.add('leeg');
+    el.textContent = '?';
+  } else {
+    el.classList.remove('leeg');
+    el.textContent = typedAnswer;
+  }
+}
+
+function numpadTik(k) {
+  if (k === 'del') {
+    typedAnswer = typedAnswer.slice(0, -1);
+    updateAntwoordDisplay();
+  } else if (k === 'ok') {
+    if (typedAnswer === '') return;
+    controleerAntwoord();
+  } else {
+    if (typedAnswer.length >= 3) return;
+    typedAnswer += k;
+    updateAntwoordDisplay();
+  }
+}
+
+function controleerAntwoord() {
+  const verwacht = getal1 - getal2;
+  const el = document.getElementById('antwoord-display');
+  const meldingEl = document.getElementById('melding');
+  if (parseInt(typedAnswer) === verwacht) {
+    el.classList.add('goed');
+    meldingEl.style.display = 'none';
+    fase = 'klaar';
+    startConfetti();
+    document.getElementById('goed-banner').style.display = 'block';
+    render();
+  } else {
+    el.classList.add('fout');
+    setTimeout(() => { typedAnswer = ''; updateAntwoordDisplay(); }, 500);
+  }
+}
+
+// ========== RENDER (alles) ==========
+function render() {
+  if (fase === 'neerleggen' && toonVerwijderHint && bordWaarde() === getal1) {
+    toonVerwijderHint = false;
+    document.getElementById('melding').style.display = 'none';
+  }
+  renderWerkvlak();
+  renderVoorraad();
+
+  const antwoordWrap = document.getElementById('antwoord-wrap');
+  antwoordWrap.style.display = (fase === 'aftrekken' && klaarOmTeAntwoorden) ? 'block' : 'none';
+
+  document.getElementById('undo-btn').disabled = geschiedenis.length === 0;
+  const klaarBtn = document.getElementById('klaar-btn');
+  klaarBtn.style.display = (fase === 'neerleggen' || (fase === 'aftrekken' && !klaarOmTeAntwoorden)) ? 'inline-flex' : 'none';
+  klaarBtn.title = fase === 'neerleggen' ? 'Controleer' : 'Ik wil het antwoord intypen';
+}
+
+document.getElementById('klaar-btn').onclick = () => {
+  if (fase === 'neerleggen') {
+    controleer();
+  } else if (fase === 'aftrekken' && !klaarOmTeAntwoorden) {
+    const meldingEl = document.getElementById('melding');
+    const verwacht = getal1 - getal2;
+    if (bordWaarde() === verwacht) {
+      klaarOmTeAntwoorden = true;
+      meldingEl.style.display = 'none';
+      render();
+    } else {
+      const verschil = bordWaarde() - verwacht;
+      meldingEl.innerHTML = verschil > 0
+        ? `<span class="melding-pijl">⬇</span><span class="melding-woord">nog niet</span>`
+        : `<span class="melding-pijl">⬆</span><span class="melding-woord">te veel weg</span>`;
+      meldingEl.style.display = 'flex';
+    }
+  }
+};
+document.getElementById('undo-btn').onclick = undo;
+document.getElementById('volgende-btn').onclick = nieuweSom;
+
+nieuweSom();
+</script>
+</body>
+</html>
