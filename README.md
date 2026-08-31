@@ -2,7 +2,7 @@
 
 Een interactief kralenspel voor kinderen van groep 3/4 om aftrekken met tientallen en eenheden te oefenen, gebaseerd op de montessori kralenstaafjes-methode. Gebouwd als één HTML-bestand zonder dependencies.
 
-🔗 **Live spelen:** [colorcodednl.github.io/Kralenspel](https://colorcodednl.github.io/Kralenspel/)
+🔗 **Live spelen:** [colorcodednl.github.io/Kralenspel](https://colorcodednl.github.io/kralenspel/)
 
 ---
 
